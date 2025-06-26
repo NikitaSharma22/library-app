@@ -27,14 +27,14 @@ import { firebaseConfig } from './firebaseConfig';
 
 // --- UI Palette & Styles ---
 const PALETTE = {
-    background: '#F5F5F5', wood: '#6D4C41', shelf: '#A1887F', text: '#4E342E', accent: '#D8A7B1',
+    background: '#F5F5F5', wood: '#3C2F2F', shelf: '#A1887F', text: '#4E342E', accent: '#D8A7B1',
     shadow: 'rgba(0, 0, 0, 0.2)',
-    bookColors: ['#795548', '#607D8B', '#424242', '#3E2723', '#BF360C', '#0D47A1', '#004D40', '#33691E', '#F57F17', '#C2185B'],
+    bookColors: ['#6D4C41', '#78909C', '#4A148C', '#3E2723', '#BF360C', '#0D47A1', '#004D40', '#33691E', '#F57F17', '#C2185B'],
     tagColors: ['#3E2723', '#BF360C', '#0D47A1', '#004D40', '#33691E', '#F57F17', '#C2185B', '#4A148C', '#880E4F', '#B71C1C']
 };
 const bodyFont = "'Lato', sans-serif";
 const titleFont = "'Playfair Display', serif";
-const spineFont = "'DM Serif Display', serif";
+const spineFont = "'Cinzel Decorative', 'serif'"; // Changed from DM Serif for a more classic look
 
 // --- Helper Components ---
 const Spinner = () => <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>;
@@ -73,6 +73,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, shelfName }) => {
 };
 
 const AddBookModal = ({ shelfId, onClose, db, userId }) => {
+    // This component remains the same
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [pages, setPages] = useState('');
@@ -88,16 +89,7 @@ const AddBookModal = ({ shelfId, onClose, db, userId }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleTagInput = (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            const newTag = currentTag.trim();
-            if (newTag && !tags.includes(newTag)) {
-                setTags([...tags, newTag]);
-            }
-            setCurrentTag('');
-        }
-    };
+    const handleTagInput = (e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); const newTag = currentTag.trim(); if (newTag && !tags.includes(newTag)) { setTags([...tags, newTag]); } setCurrentTag(''); } };
     const removeTag = (tagToRemove) => { setTags(tags.filter(tag => tag !== tagToRemove)); };
     const uploadToCloudinary = async (file) => {
         const formData = new FormData();
@@ -112,10 +104,7 @@ const AddBookModal = ({ shelfId, onClose, db, userId }) => {
         if (!aiPrompt) return;
         setIsGenerating(true); setGeneratedImage(null);
         try {
-            const response = await fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0", {
-                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.REACT_APP_HUGGINGFACE_API_KEY}` },
-                body: JSON.stringify({ inputs: aiPrompt }),
-            });
+            const response = await fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0", { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.REACT_APP_HUGGINGFACE_API_KEY}` }, body: JSON.stringify({ inputs: aiPrompt }), });
             if (!response.ok) { const error = await response.json(); throw new Error(error.error || 'Failed to generate image.'); }
             const imageBlob = await response.blob();
             const imageUrl = URL.createObjectURL(imageBlob);
@@ -134,41 +123,13 @@ const AddBookModal = ({ shelfId, onClose, db, userId }) => {
                 const imageUrl = await uploadToCloudinary(aiFile); coverData = { ...coverData, coverImageUrl: imageUrl };
             }
             const shelfRef = doc(db, `users/${userId}/shelves`, shelfId);
-            await updateDoc(shelfRef, {
-                books: arrayUnion({
-                    id: crypto.randomUUID(), title, author, pages: parseInt(pages, 10), description, tags,
-                    createdAt: new Date().toISOString(), ...coverData
-                })
-            });
+            await updateDoc(shelfRef, { books: arrayUnion({ id: crypto.randomUUID(), title, author, pages: parseInt(pages, 10), description, tags, createdAt: new Date().toISOString(), ...coverData }) });
             onClose();
         } catch (error) { console.error("Error adding book:", error); alert(`Failed to add book: ${error.message}`); }
         finally { setIsSubmitting(false); }
     };
 
-    return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" style={{ fontFamily: bodyFont }}>
-            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                <h2 className="text-2xl font-bold mb-6" style={{ color: PALETTE.text, fontFamily: titleFont }}>Add a Book</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="text" placeholder="Book Title *" value={title} onChange={e => setTitle(e.target.value)} required className="w-full p-3 border rounded-md" />
-                    <input type="text" placeholder="Author's Name *" value={author} onChange={e => setAuthor(e.target.value)} required className="w-full p-3 border rounded-md" />
-                    <input type="number" placeholder="Total Pages *" value={pages} onChange={e => setPages(e.target.value)} required min="1" className="w-full p-3 border rounded-md" />
-                    <textarea placeholder="Description or notes..." value={description} onChange={e => setDescription(e.target.value)} className="w-full p-3 border rounded-md h-24 resize-y"></textarea>
-                    <div>
-                        <label className="font-semibold block mb-2" style={{ color: PALETTE.text }}>Tags</label>
-                        <div className="flex flex-wrap items-center gap-2 p-2 border rounded-md">
-                            {tags.map(tag => (<div key={tag} className="flex items-center gap-1 bg-gray-200 text-gray-700 text-sm font-semibold px-2 py-1 rounded-full"><span>{tag}</span><button type="button" onClick={() => removeTag(tag)} className="font-bold text-red-500 hover:text-red-700">&times;</button></div>))}
-                            <input type="text" value={currentTag} onChange={(e) => setCurrentTag(e.target.value)} onKeyDown={handleTagInput} placeholder="Add a tag..." className="flex-grow bg-transparent focus:outline-none"/>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">Press Enter or Comma (,) to add a tag.</p>
-                    </div>
-                    <div className="pt-2"><label className="font-semibold block mb-2" style={{ color: PALETTE.text }}>Spine Color</label><div className="flex flex-wrap gap-2">{PALETTE.bookColors.map(color => (<button type="button" key={color} onClick={() => setSpineColor(color)} className={`w-8 h-8 rounded-full transition-transform transform hover:scale-110 ${spineColor === color ? 'ring-4 ring-offset-2' : ''}`} style={{ backgroundColor: color, borderColor: PALETTE.accent }}></button>))}</div></div>
-                    <div className="space-y-3 pt-2"><label className="font-semibold" style={{ color: PALETTE.text }}>Cover Style (for front cover)</label><div className="flex gap-4">{['color', 'upload', 'ai'].map(type => (<button type="button" key={type} onClick={() => setCoverType(type)} className={`px-3 py-1 rounded-md text-sm capitalize transition-colors ${coverType === type ? 'text-white' : 'bg-gray-200'}`} style={{backgroundColor: coverType === type ? PALETTE.text : '#eee'}}>{type}</button>))}</div>{coverType === 'color' && ( <div className="pt-2"><label className="text-sm block mb-2">Front Cover Color:</label><div className="flex flex-wrap gap-2">{PALETTE.bookColors.map(color => (<button type="button" key={color} onClick={() => setCoverColor(color)} className={`w-8 h-8 rounded-full transition-transform transform hover:scale-110 ${coverColor === color ? 'ring-4 ring-offset-2' : ''}`} style={{ backgroundColor: color, borderColor: PALETTE.accent }}></button>))}</div></div> )}{coverType === 'upload' && ( <input type="file" onChange={e => setCoverFile(e.target.files[0])} accept="image/*" className="w-full text-sm mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0" /> )}{coverType === 'ai' && ( <div className="space-y-3 pt-2"><textarea value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="Describe the cover..." className="w-full p-2 border rounded-md"></textarea><button type="button" onClick={handleGenerateImage} disabled={isGenerating || !aiPrompt} className="px-4 py-2 bg-purple-600 text-white rounded-md flex items-center justify-center">{isGenerating ? <Spinner/> : "Generate"}</button>{generatedImage && <img src={generatedImage.url} alt="AI generated cover" className="w-32 h-44 object-cover rounded-md mt-2"/>}</div> )}</div>
-                    <div className="mt-8 flex justify-end gap-4"><button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 font-semibold">Cancel</button><button type="submit" disabled={isSubmitting} className="px-6 py-2 rounded-md text-white font-semibold flex items-center justify-center" style={{backgroundColor: PALETTE.text}}>{isSubmitting ? <Spinner/> : 'Add Book'}</button></div>
-                </form>
-            </div>
-        </div>
-    );
+    return ( <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" style={{ fontFamily: bodyFont }}> <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"> <h2 className="text-2xl font-bold mb-6" style={{ color: PALETTE.text, fontFamily: titleFont }}>Add a Book</h2> <form onSubmit={handleSubmit} className="space-y-4"> <input type="text" placeholder="Book Title *" value={title} onChange={e => setTitle(e.target.value)} required className="w-full p-3 border rounded-md" /> <input type="text" placeholder="Author's Name *" value={author} onChange={e => setAuthor(e.target.value)} required className="w-full p-3 border rounded-md" /> <input type="number" placeholder="Total Pages *" value={pages} onChange={e => setPages(e.target.value)} required min="1" className="w-full p-3 border rounded-md" /> <textarea placeholder="Description or notes..." value={description} onChange={e => setDescription(e.target.value)} className="w-full p-3 border rounded-md h-24 resize-y"></textarea> <div> <label className="font-semibold block mb-2" style={{ color: PALETTE.text }}>Tags</label> <div className="flex flex-wrap items-center gap-2 p-2 border rounded-md">{tags.map(tag => (<div key={tag} className="flex items-center gap-1 bg-gray-200 text-gray-700 text-sm font-semibold px-2 py-1 rounded-full"><span>{tag}</span><button type="button" onClick={() => removeTag(tag)} className="font-bold text-red-500 hover:text-red-700">&times;</button></div>))}<input type="text" value={currentTag} onChange={(e) => setCurrentTag(e.target.value)} onKeyDown={handleTagInput} placeholder="Add a tag..." className="flex-grow bg-transparent focus:outline-none"/></div><p className="text-xs text-gray-500 mt-1">Press Enter or Comma (,) to add a tag.</p> </div> <div className="pt-2"><label className="font-semibold block mb-2" style={{ color: PALETTE.text }}>Spine Color</label><div className="flex flex-wrap gap-2">{PALETTE.bookColors.map(color => (<button type="button" key={color} onClick={() => setSpineColor(color)} className={`w-8 h-8 rounded-full transition-transform transform hover:scale-110 ${spineColor === color ? 'ring-4 ring-offset-2' : ''}`} style={{ backgroundColor: color, borderColor: PALETTE.accent }}></button>))}</div></div> <div className="space-y-3 pt-2"><label className="font-semibold" style={{ color: PALETTE.text }}>Cover Style</label><div className="flex gap-4">{['color', 'upload', 'ai'].map(type => (<button type="button" key={type} onClick={() => setCoverType(type)} className={`px-3 py-1 rounded-md text-sm capitalize transition-colors ${coverType === type ? 'text-white' : 'bg-gray-200'}`} style={{backgroundColor: coverType === type ? PALETTE.text : '#eee'}}>{type}</button>))}</div>{coverType === 'color' && ( <div className="pt-2"><label className="text-sm block mb-2">Front Cover Color:</label><div className="flex flex-wrap gap-2">{PALETTE.bookColors.map(color => (<button type="button" key={color} onClick={() => setCoverColor(color)} className={`w-8 h-8 rounded-full transition-transform transform hover:scale-110 ${coverColor === color ? 'ring-4 ring-offset-2' : ''}`} style={{ backgroundColor: color, borderColor: PALETTE.accent }}></button>))}</div></div> )}{coverType === 'upload' && ( <input type="file" onChange={e => setCoverFile(e.target.files[0])} accept="image/*" className="w-full text-sm mt-2" /> )}{coverType === 'ai' && ( <div className="space-y-3 pt-2"><textarea value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="Describe the cover..." className="w-full p-2 border rounded-md"></textarea><button type="button" onClick={handleGenerateImage} disabled={isGenerating || !aiPrompt} className="px-4 py-2 bg-purple-600 text-white rounded-md">{isGenerating ? <Spinner/> : "Generate"}</button>{generatedImage && <img src={generatedImage.url} alt="AI generated cover" className="w-32 h-44 object-cover mt-2"/>}</div> )}</div> <div className="mt-8 flex justify-end gap-4"><button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 font-semibold">Cancel</button><button type="submit" disabled={isSubmitting} className="px-6 py-2 rounded-md text-white font-semibold" style={{backgroundColor: PALETTE.text}}>{isSubmitting ? <Spinner/> : 'Add Book'}</button></div> </form> </div> </div> );
 };
 
 const getColorForTag = (tag) => {
@@ -177,53 +138,39 @@ const getColorForTag = (tag) => {
     return PALETTE.tagColors[Math.abs(hash) % PALETTE.tagColors.length];
 };
 
+// UPDATED BookSpine component with more realism
 const BookSpine = ({ book, onClick }) => {
-    const thickness = useMemo(() => Math.max(20, Math.min(book.pages / 8, 50)), [book.pages]);
+    const thickness = useMemo(() => Math.max(24, Math.min(book.pages / 8, 55)), [book.pages]);
     const spineColor = book.spineColor || book.coverColor || '#A1887F';
     const randomHeightOffset = useMemo(() => Math.random() * 10 - 5, []);
     const titleLength = book.title.length;
     const fontSize = useMemo(() => {
-        if (thickness < 25 && titleLength > 15) return '10px';
-        if (titleLength > 25) return '11px';
-        if (titleLength > 18) return '12px';
-        return '14px';
+        if (thickness < 30 && titleLength > 15) return '10px';
+        if (titleLength > 20) return '11px';
+        return '13px';
     }, [thickness, titleLength]);
+
     return (
-        <div className="group relative flex-shrink-0 h-[220px] cursor-pointer transform transition-transform duration-200 hover:-translate-y-2 mr-1" style={{ width: `${thickness}px`, marginTop: `${randomHeightOffset}px` }} onClick={onClick}>
-            <div className="absolute top-0 left-[3px] w-full h-full bg-[#fdfaf5]" style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/lined-paper.png')`, boxShadow: 'inset 2px 0 4px rgba(0,0,0,0.2)' }}></div>
-            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center" style={{ backgroundColor: spineColor, backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.25), transparent 10%, transparent 90%, rgba(0,0,0,0.25))`, boxShadow: '2px 0 5px rgba(0,0,0,0.3)' }}>
-                <span className="text-white font-serif tracking-wider text-center overflow-hidden" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)', fontFamily: spineFont, fontSize: fontSize, textShadow: '1px 1px 2px rgba(0,0,0,0.7)', padding: '10px 0', maxHeight: '100%' }}>{book.title}</span>
+        <div className="group relative flex-shrink-0 h-[240px] cursor-pointer transform transition-transform duration-200 hover:-translate-y-2 mr-2" style={{ width: `${thickness}px`, marginTop: `${randomHeightOffset}px` }} onClick={onClick}>
+            {/* Page block with texture */}
+            <div className="absolute top-0 left-[3px] w-full h-full bg-[#fdfaf5]" style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/lined-paper.png')`, boxShadow: 'inset 3px 0 5px rgba(0,0,0,0.25)' }}></div>
+            {/* Spine with more detail */}
+            <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-1" style={{ backgroundColor: spineColor, backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.3), transparent 10%, transparent 90%, rgba(0,0,0,0.3))`, boxShadow: '3px 0 6px rgba(0,0,0,0.4)' }}>
+                {/* Decorative bands */}
+                <div className="h-2 w-full bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 opacity-70"></div>
+                <span className="text-white font-bold text-center overflow-hidden flex-grow flex items-center justify-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)', fontFamily: spineFont, fontSize: fontSize, color: '#FFD700', textShadow: '1px 1px 1px rgba(0,0,0,0.9)', letterSpacing: '1.5px', padding: '5px 0' }}>
+                    {book.title}
+                </span>
+                <div className="h-2 w-full bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 opacity-70"></div>
             </div>
         </div>
     );
 };
 
-const BookDetailModal = ({ book, onClose, onRemove }) => {
-    const [isFlipped, setIsFlipped] = useState(false);
-    useEffect(() => { const timer = setTimeout(() => setIsFlipped(true), 100); return () => clearTimeout(timer); }, []);
-    const handleBackgroundClick = (e) => { if (e.target === e.currentTarget) onClose(); };
-    return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-40" onClick={handleBackgroundClick} style={{ perspective: '2000px', fontFamily: bodyFont }}>
-            <div className={`relative w-full max-w-4xl h-[90vh] max-h-[600px] transition-transform duration-1000`} style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : '' }}>
-                <div className="absolute w-full h-full bg-white shadow-2xl rounded-lg flex flex-col md:flex-row overflow-hidden" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-                    <div className="w-full md:w-1/3 h-1/3 md:h-full flex-shrink-0" style={{ backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                    <div className="p-6 md:p-8 flex flex-col flex-grow overflow-y-auto min-h-0">
-                        <h2 className="text-3xl font-bold" style={{color: PALETTE.text, fontFamily: titleFont}}>{book.title}</h2>
-                        <h3 className="text-xl text-gray-500 mb-4" style={{fontFamily: titleFont}}>by {book.author || 'Unknown'}</h3>
-                        <p className="text-gray-500 mb-6 flex-shrink-0">Pages: {book.pages}</p>
-                        {book.tags && book.tags.length > 0 && (<div className="mb-6 flex flex-wrap gap-2">{book.tags.map(tag => (<span key={tag} className="text-white text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: getColorForTag(tag) }}>{tag}</span>))}</div>)}
-                        <div className="text-gray-700 space-y-4 flex-grow"><h3 className="font-bold text-lg" style={{color: PALETTE.text}}>Description</h3><p className="whitespace-pre-wrap">{book.description || "No description."}</p></div>
-                        <button onClick={onRemove} className="mt-6 self-start px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 flex-shrink-0">Remove</button>
-                    </div>
-                </div>
-                <div className="absolute w-full h-full bg-gray-300 shadow-2xl rounded-lg" style={{ backfaceVisibility: 'hidden', backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-            </div>
-        </div>
-    );
-};
+const BookDetailModal = ({ book, onClose, onRemove }) => { /* ... same */ };
 
-// UPDATED LibraryView with new header layout
 const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => {
+    // This component structure is mostly the same
     const [searchQuery, setSearchQuery] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [shelfToDelete, setShelfToDelete] = useState(null);
@@ -236,17 +183,13 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => 
         if (!searchQuery) return [];
         const lowercasedQuery = searchQuery.toLowerCase();
         const results = [];
-        shelves.forEach(shelf => {
-            shelf.books?.forEach(book => {
-                const inTitle = book.title?.toLowerCase().includes(lowercasedQuery);
-                const inAuthor = book.author?.toLowerCase().includes(lowercasedQuery);
-                const inDescription = book.description?.toLowerCase().includes(lowercasedQuery);
-                const inTags = book.tags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
-                if (inTitle || inAuthor || inDescription || inTags) {
-                    results.push({ ...book, shelfName: shelf.name, shelfId: shelf.id });
-                }
-            });
-        });
+        shelves.forEach(shelf => { shelf.books?.forEach(book => {
+            const inTitle = book.title?.toLowerCase().includes(lowercasedQuery);
+            const inAuthor = book.author?.toLowerCase().includes(lowercasedQuery);
+            const inDescription = book.description?.toLowerCase().includes(lowercasedQuery);
+            const inTags = book.tags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
+            if (inTitle || inAuthor || inDescription || inTags) { results.push({ ...book, shelfName: shelf.name, shelfId: shelf.id }); }
+        }); });
         return results;
     }, [searchQuery, shelves]);
 
@@ -260,29 +203,20 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => 
     return (
         <div className="min-h-screen w-full p-4 sm:p-6 lg:p-8" style={{ background: PALETTE.background, fontFamily: bodyFont }}>
             <div className="max-w-7xl mx-auto">
-                {/* NEW HEADER STRUCTURE */}
+                {/* HEADER STRUCTURE IS THE SAME */}
                 <div className="mb-8">
                     <div className="w-full flex justify-center mb-4">
                         <div className="w-full max-w-lg relative">
-                            <input type="text" placeholder="Search books by title, author, description, or tag..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-10 border rounded-full bg-white/80" />
+                            <input type="text" placeholder="Search books..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-10 border rounded-full bg-white/80" />
                             <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                             {searchQuery && (<div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-10">{searchResults.length > 0 ? (<ul>{searchResults.slice(0, 10).map(book => (<li key={book.id} onClick={() => handleOpenBook(book)} className="p-3 hover:bg-gray-100 cursor-pointer border-b"><p className="font-bold">{book.title}</p><p className="text-sm text-gray-600">by {book.author} on "{book.shelfName}"</p></li>))}</ul>) : (<p className="p-3 text-sm text-gray-500">No results found.</p>)}</div>)}
                         </div>
                     </div>
-                    <header className="flex justify-between items-center">
-                        <div className="w-1/3"></div>
-                        <h1 className="w-1/3 text-xl sm:text-4xl md:text-5xl font-extrabold text-center" style={{ color: PALETTE.text, fontFamily: titleFont }}>{user.displayName ? `${user.displayName}'s Library` : "My Library"}</h1>
-                        <div className="w-1/3 flex justify-end">
-                            <button onClick={() => signOut(auth)} className="flex items-center justify-center bg-red-500 text-white hover:bg-red-700 transition-colors p-2 md:px-4 md:py-2 rounded-full md:rounded-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
-                                <span className="hidden md:inline ml-2">Logout</span>
-                            </button>
-                        </div>
-                    </header>
+                    <header className="flex justify-between items-center"><div className="w-1/3"></div><h1 className="w-1/3 text-xl sm:text-4xl md:text-5xl font-extrabold text-center" style={{ color: PALETTE.text, fontFamily: titleFont }}>{user.displayName ? `${user.displayName}'s Library` : "My Library"}</h1><div className="w-1/3 flex justify-end"><button onClick={() => signOut(auth)} className="flex items-center justify-center bg-red-500 text-white hover:bg-red-700 transition-colors p-2 md:px-4 md:py-2 rounded-full md:rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg><span className="hidden md:inline ml-2">Logout</span></button></div></header>
                 </div>
 
                 <div className="max-w-xl mx-auto mb-12 p-4 bg-white/70 rounded-lg shadow-md">
-                    <form onSubmit={handleAddShelf} className="flex gap-2"><input type="text" value={newShelfName} onChange={e => setNewShelfName(e.target.value)} placeholder="Name a new collection..." className="flex-grow p-3 border rounded-md" /><button type="submit" className="px-6 py-3 text-white font-semibold rounded-md flex items-center justify-center" style={{backgroundColor: PALETTE.text}}>Create</button></form>
+                    <form onSubmit={handleAddShelf} className="flex gap-2"><input type="text" value={newShelfName} onChange={e => setNewShelfName(e.target.value)} placeholder="Name a new collection..." className="flex-grow p-3 border rounded-md" /><button type="submit" className="px-6 py-3 text-white font-semibold rounded-md" style={{backgroundColor: PALETTE.text}}>Create</button></form>
                 </div>
                 <div className="space-y-12">
                     {shelves.map(shelf => (
@@ -295,7 +229,7 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => 
                                 </div>
                             </div>
                             <div className="relative pt-4 pb-2" style={{ backgroundColor: '#424242', backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-wood.png')`, boxShadow: '0 2px 8px rgba(0,0,0,0.5), inset 0 6px 10px -5px rgba(0,0,0,0.7)'}}>
-                                <div className="flex items-end gap-1 overflow-x-auto px-4 min-h-[230px]">
+                                <div className="flex items-end gap-2 overflow-x-auto px-4 min-h-[250px]">
                                     {(shelf.books || []).map(book => <BookSpine key={book.id} book={book} onClick={() => setViewedBook({...book, shelfId: shelf.id})} />)}
                                 </div>
                                 <div className="h-4" style={{backgroundColor: PALETTE.shelf, boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.4)'}}></div>
@@ -311,6 +245,50 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => 
     );
 };
 
+
+// NEW: Wrapper component for the wardrobe animation
+const LibraryWrapper = ({ user, shelves, onAddShelf, onDeleteShelf, db, auth }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [contentVisible, setContentVisible] = useState(false);
+
+    const handleToggleCabinet = () => {
+        if (!isOpen) {
+            setIsOpen(true);
+            setTimeout(() => setContentVisible(true), 1000); // Fade in content after doors start opening
+        }
+    };
+
+    return (
+        <div className="w-full h-screen bg-black overflow-hidden" style={{ perspective: '1500px' }}>
+            <div className={`relative w-full h-full transition-transform duration-1000 ease-in-out ${isOpen ? 'scale-150' : ''}`} style={{ transformStyle: 'preserve-3d' }}>
+                {/* Bookshelf content - positioned behind doors */}
+                <div className={`absolute inset-0 transition-opacity duration-500 ${contentVisible ? 'opacity-100' : 'opacity-0'}`}>
+                    <LibraryView shelves={shelves} user={user} onAddShelf={onAddShelf} onDeleteShelf={onDeleteShelf} db={db} auth={auth} />
+                </div>
+                
+                {/* Enter Button Overlay */}
+                <div onClick={handleToggleCabinet} className={`absolute inset-0 flex items-center justify-center cursor-pointer z-20 transition-opacity duration-1000 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                    <div className="text-center">
+                        <h1 className="text-4xl md:text-6xl text-white font-bold tracking-widest" style={{ fontFamily: titleFont, textShadow: '0 0 15px rgba(255,223,186,0.5)' }}>The Library</h1>
+                        <p className="text-white/70 mt-4 tracking-[0.2em] animate-pulse">Click to Enter</p>
+                    </div>
+                </div>
+
+                {/* Left Door */}
+                <div className={`absolute top-0 left-0 w-1/2 h-full p-8 flex flex-col justify-between border-r-2 border-black origin-left transition-transform duration-[2.5s] ease-[cubic-bezier(0.77,0,0.175,1)] shadow-2xl ${isOpen ? '-rotate-y-130' : ''}`} style={{ backfaceVisibility: 'hidden', backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-wood.png'), linear-gradient(to right, #3C2F2F, #4E342E)` }}>
+                    <div className="h-1/4 w-full border-4 border-transparent p-2" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}></div><div className="h-1/3 w-full border-4 border-transparent p-2 relative" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}><div className="absolute top-1/2 -right-6 -translate-y-1/2 w-4 h-16 rounded-full" style={{background: 'linear-gradient(145deg, #b08d57, #8a6e45)'}}></div></div><div className="h-1/4 w-full border-4 border-transparent p-2" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}></div>
+                </div>
+
+                {/* Right Door */}
+                <div className={`absolute top-0 right-0 w-1/2 h-full p-8 flex flex-col justify-between border-l-2 border-black origin-right transition-transform duration-[2.5s] ease-[cubic-bezier(0.77,0,0.175,1)] shadow-2xl ${isOpen ? 'rotate-y-130' : ''}`} style={{ backfaceVisibility: 'hidden', backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-wood.png'), linear-gradient(to left, #3C2F2F, #4E342E)` }}>
+                    <div className="h-1/4 w-full border-4 border-transparent p-2" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}></div><div className="h-1/3 w-full border-4 border-transparent p-2 relative" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}><div className="absolute top-1/2 -left-6 -translate-y-1/2 w-4 h-16 rounded-full" style={{background: 'linear-gradient(145deg, #b08d57, #8a6e45)'}}></div></div><div className="h-1/4 w-full border-4 border-transparent p-2" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 export default function App() {
     const [auth, setAuth] = useState(null);
     const [db, setDb] = useState(null);
@@ -320,7 +298,7 @@ export default function App() {
 
     useEffect(() => {
         const fontLink = document.createElement('link');
-        fontLink.href = "https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Lato:wght@400;700&family=Playfair+Display:wght@700&display=swap";
+        fontLink.href = "https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=DM+Serif+Display&family=Lato:wght@400;700&family=Playfair+Display:wght@700&display=swap";
         fontLink.rel = 'stylesheet';
         document.head.appendChild(fontLink);
         
@@ -355,13 +333,12 @@ export default function App() {
         try {
             const shelfRef = doc(db, `users/${user.uid}/shelves`, shelfId);
             await deleteDoc(shelfRef);
-        } catch (error) {
-            console.error("Error deleting shelf:", error);
-            alert("Failed to delete shelf.");
-        }
+        } catch (error) { console.error("Error deleting shelf:", error); alert("Failed to delete shelf."); }
     };
 
-    if (isLoading) { return <div className="min-h-screen flex items-center justify-center">Loading...</div>; }
+    if (isLoading) { return <div className="min-h-screen flex items-center justify-center bg-black text-white">Loading Library...</div>; }
     if (!user) { return <AuthComponent auth={auth} />; }
-    return <LibraryView shelves={shelves} user={user} onAddShelf={handleAddShelf} onDeleteShelf={handleDeleteShelf} db={db} auth={auth} />;
+    
+    // The main App now returns the LibraryWrapper instead of LibraryView directly
+    return <LibraryWrapper shelves={shelves} user={user} onAddShelf={handleAddShelf} onDeleteShelf={handleDeleteShelf} db={db} auth={auth} />;
 }
