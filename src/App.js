@@ -1,6 +1,5 @@
 // In src/App.js
 
-// REMOVED `useCallback` as it was unused.
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
@@ -13,6 +12,7 @@ import {
 } from 'firebase/auth';
 import {
     getFirestore,
+    collection,
     doc,
     onSnapshot,
     setDoc,
@@ -21,7 +21,6 @@ import {
     arrayUnion,
     arrayRemove,
     query,
-    collection,
     deleteDoc
 } from 'firebase/firestore';
 import { firebaseConfig } from './firebaseConfig';
@@ -356,4 +355,5 @@ export default function App() {
 
     if (isLoading) { return <div className="min-h-screen flex items-center justify-center">Loading...</div>; }
     if (!user) { return <AuthComponent auth={auth} />; }
-    return <LibraryView shelves={shelves} user={user} onAddShelf={handleAddShelf} onDeleteShelf={handleDeleteShelf}
+    return <LibraryView shelves={shelves} user={user} onAddShelf={handleAddShelf} onDeleteShelf={handleDeleteShelf} db={db} auth={auth} />;
+}
