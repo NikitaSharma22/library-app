@@ -34,7 +34,7 @@ const PALETTE = {
 };
 const bodyFont = "'Lato', sans-serif";
 const titleFont = "'Playfair Display', serif";
-const spineFont = "'Cinzel Decorative', 'serif'"; // Changed from DM Serif for a more classic look
+const spineFont = "'Cinzel Decorative', 'serif'";
 
 // --- Helper Components ---
 const Spinner = () => <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>;
@@ -73,7 +73,6 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, shelfName }) => {
 };
 
 const AddBookModal = ({ shelfId, onClose, db, userId }) => {
-    // This component remains the same
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [pages, setPages] = useState('');
@@ -138,7 +137,6 @@ const getColorForTag = (tag) => {
     return PALETTE.tagColors[Math.abs(hash) % PALETTE.tagColors.length];
 };
 
-// UPDATED BookSpine component with more realism
 const BookSpine = ({ book, onClick }) => {
     const thickness = useMemo(() => Math.max(24, Math.min(book.pages / 8, 55)), [book.pages]);
     const spineColor = book.spineColor || book.coverColor || '#A1887F';
@@ -152,25 +150,41 @@ const BookSpine = ({ book, onClick }) => {
 
     return (
         <div className="group relative flex-shrink-0 h-[240px] cursor-pointer transform transition-transform duration-200 hover:-translate-y-2 mr-2" style={{ width: `${thickness}px`, marginTop: `${randomHeightOffset}px` }} onClick={onClick}>
-            {/* Page block with texture */}
             <div className="absolute top-0 left-[3px] w-full h-full bg-[#fdfaf5]" style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/lined-paper.png')`, boxShadow: 'inset 3px 0 5px rgba(0,0,0,0.25)' }}></div>
-            {/* Spine with more detail */}
             <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-1" style={{ backgroundColor: spineColor, backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.3), transparent 10%, transparent 90%, rgba(0,0,0,0.3))`, boxShadow: '3px 0 6px rgba(0,0,0,0.4)' }}>
-                {/* Decorative bands */}
                 <div className="h-2 w-full bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 opacity-70"></div>
-                <span className="text-white font-bold text-center overflow-hidden flex-grow flex items-center justify-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)', fontFamily: spineFont, fontSize: fontSize, color: '#FFD700', textShadow: '1px 1px 1px rgba(0,0,0,0.9)', letterSpacing: '1.5px', padding: '5px 0' }}>
-                    {book.title}
-                </span>
+                <span className="text-white font-bold text-center overflow-hidden flex-grow flex items-center justify-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)', fontFamily: spineFont, fontSize: fontSize, color: '#FFD700', textShadow: '1px 1px 1px rgba(0,0,0,0.9)', letterSpacing: '1.5px', padding: '5px 0' }}>{book.title}</span>
                 <div className="h-2 w-full bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 opacity-70"></div>
             </div>
         </div>
     );
 };
 
-const BookDetailModal = ({ book, onClose, onRemove }) => { /* ... same */ };
+const BookDetailModal = ({ book, onClose, onRemove }) => {
+    const [isFlipped, setIsFlipped] = useState(false);
+    useEffect(() => { const timer = setTimeout(() => setIsFlipped(true), 100); return () => clearTimeout(timer); }, []);
+    const handleBackgroundClick = (e) => { if (e.target === e.currentTarget) onClose(); };
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-40" onClick={handleBackgroundClick} style={{ perspective: '2000px', fontFamily: bodyFont }}>
+            <div className={`relative w-full max-w-4xl h-[90vh] max-h-[600px] transition-transform duration-1000`} style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : '' }}>
+                <div className="absolute w-full h-full bg-white shadow-2xl rounded-lg flex flex-col md:flex-row overflow-hidden" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                    <div className="w-full md:w-1/3 h-1/3 md:h-full flex-shrink-0" style={{ backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                    <div className="p-6 md:p-8 flex flex-col flex-grow overflow-y-auto min-h-0">
+                        <h2 className="text-3xl font-bold" style={{color: PALETTE.text, fontFamily: titleFont}}>{book.title}</h2>
+                        <h3 className="text-xl text-gray-500 mb-4" style={{fontFamily: titleFont}}>by {book.author || 'Unknown'}</h3>
+                        <p className="text-gray-500 mb-6 flex-shrink-0">Pages: {book.pages}</p>
+                        {book.tags && book.tags.length > 0 && (<div className="mb-6 flex flex-wrap gap-2">{book.tags.map(tag => (<span key={tag} className="text-white text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: getColorForTag(tag) }}>{tag}</span>))}</div>)}
+                        <div className="text-gray-700 space-y-4 flex-grow"><h3 className="font-bold text-lg" style={{color: PALETTE.text}}>Description</h3><p className="whitespace-pre-wrap">{book.description || "No description."}</p></div>
+                        <button onClick={onRemove} className="mt-6 self-start px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 flex-shrink-0">Remove</button>
+                    </div>
+                </div>
+                <div className="absolute w-full h-full bg-gray-300 shadow-2xl rounded-lg" style={{ backfaceVisibility: 'hidden', backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+            </div>
+        </div>
+    );
+};
 
 const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => {
-    // This component structure is mostly the same
     const [searchQuery, setSearchQuery] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [shelfToDelete, setShelfToDelete] = useState(null);
@@ -203,40 +217,9 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => 
     return (
         <div className="min-h-screen w-full p-4 sm:p-6 lg:p-8" style={{ background: PALETTE.background, fontFamily: bodyFont }}>
             <div className="max-w-7xl mx-auto">
-                {/* HEADER STRUCTURE IS THE SAME */}
-                <div className="mb-8">
-                    <div className="w-full flex justify-center mb-4">
-                        <div className="w-full max-w-lg relative">
-                            <input type="text" placeholder="Search books..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-10 border rounded-full bg-white/80" />
-                            <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            {searchQuery && (<div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-10">{searchResults.length > 0 ? (<ul>{searchResults.slice(0, 10).map(book => (<li key={book.id} onClick={() => handleOpenBook(book)} className="p-3 hover:bg-gray-100 cursor-pointer border-b"><p className="font-bold">{book.title}</p><p className="text-sm text-gray-600">by {book.author} on "{book.shelfName}"</p></li>))}</ul>) : (<p className="p-3 text-sm text-gray-500">No results found.</p>)}</div>)}
-                        </div>
-                    </div>
-                    <header className="flex justify-between items-center"><div className="w-1/3"></div><h1 className="w-1/3 text-xl sm:text-4xl md:text-5xl font-extrabold text-center" style={{ color: PALETTE.text, fontFamily: titleFont }}>{user.displayName ? `${user.displayName}'s Library` : "My Library"}</h1><div className="w-1/3 flex justify-end"><button onClick={() => signOut(auth)} className="flex items-center justify-center bg-red-500 text-white hover:bg-red-700 transition-colors p-2 md:px-4 md:py-2 rounded-full md:rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg><span className="hidden md:inline ml-2">Logout</span></button></div></header>
-                </div>
-
-                <div className="max-w-xl mx-auto mb-12 p-4 bg-white/70 rounded-lg shadow-md">
-                    <form onSubmit={handleAddShelf} className="flex gap-2"><input type="text" value={newShelfName} onChange={e => setNewShelfName(e.target.value)} placeholder="Name a new collection..." className="flex-grow p-3 border rounded-md" /><button type="submit" className="px-6 py-3 text-white font-semibold rounded-md" style={{backgroundColor: PALETTE.text}}>Create</button></form>
-                </div>
-                <div className="space-y-12">
-                    {shelves.map(shelf => (
-                        <div key={shelf.id}>
-                            <div className="flex justify-between items-center mb-2">
-                                <h2 className="text-2xl font-bold" style={{ color: PALETTE.text, fontFamily: titleFont }}>{shelf.name}</h2>
-                                <div className="flex items-center gap-4">
-                                    <button onClick={() => handleOpenDeleteModal(shelf)} className="w-8 h-8 flex items-center justify-center bg-red-600 rounded-full text-white hover:bg-red-700 transition-colors" title="Delete shelf"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg></button>
-                                    <button onClick={() => handleOpenAddBook(shelf.id)} className="px-3 py-1 text-white text-sm font-semibold rounded-md" style={{backgroundColor: PALETTE.accent}}>+ Add Book</button>
-                                </div>
-                            </div>
-                            <div className="relative pt-4 pb-2" style={{ backgroundColor: '#424242', backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-wood.png')`, boxShadow: '0 2px 8px rgba(0,0,0,0.5), inset 0 6px 10px -5px rgba(0,0,0,0.7)'}}>
-                                <div className="flex items-end gap-2 overflow-x-auto px-4 min-h-[250px]">
-                                    {(shelf.books || []).map(book => <BookSpine key={book.id} book={book} onClick={() => setViewedBook({...book, shelfId: shelf.id})} />)}
-                                </div>
-                                <div className="h-4" style={{backgroundColor: PALETTE.shelf, boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.4)'}}></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <div className="mb-8"><div className="w-full flex justify-center mb-4"><div className="w-full max-w-lg relative"><input type="text" placeholder="Search books..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-10 border rounded-full bg-white/80" /><svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>{searchQuery && (<div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-10">{searchResults.length > 0 ? (<ul>{searchResults.slice(0, 10).map(book => (<li key={book.id} onClick={() => handleOpenBook(book)} className="p-3 hover:bg-gray-100 cursor-pointer border-b"><p className="font-bold">{book.title}</p><p className="text-sm text-gray-600">by {book.author} on "{book.shelfName}"</p></li>))}</ul>) : (<p className="p-3 text-sm text-gray-500">No results found.</p>)}</div>)}</div></div><header className="flex justify-between items-center"><div className="w-1/3"></div><h1 className="w-1/3 text-xl sm:text-4xl md:text-5xl font-extrabold text-center" style={{ color: PALETTE.text, fontFamily: titleFont }}>{user.displayName ? `${user.displayName}'s Library` : "My Library"}</h1><div className="w-1/3 flex justify-end"><button onClick={() => signOut(auth)} className="flex items-center justify-center bg-red-500 text-white hover:bg-red-700 transition-colors p-2 md:px-4 md:py-2 rounded-full md:rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg><span className="hidden md:inline ml-2">Logout</span></button></div></header></div>
+                <div className="max-w-xl mx-auto mb-12 p-4 bg-white/70 rounded-lg shadow-md"><form onSubmit={handleAddShelf} className="flex gap-2"><input type="text" value={newShelfName} onChange={e => setNewShelfName(e.target.value)} placeholder="Name a new collection..." className="flex-grow p-3 border rounded-md" /><button type="submit" className="px-6 py-3 text-white font-semibold rounded-md" style={{backgroundColor: PALETTE.text}}>Create</button></form></div>
+                <div className="space-y-12">{shelves.map(shelf => (<div key={shelf.id}><div className="flex justify-between items-center mb-2"><h2 className="text-2xl font-bold" style={{ color: PALETTE.text, fontFamily: titleFont }}>{shelf.name}</h2><div className="flex items-center gap-4"><button onClick={() => handleOpenDeleteModal(shelf)} className="w-8 h-8 flex items-center justify-center bg-red-600 rounded-full text-white hover:bg-red-700" title="Delete shelf"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg></button><button onClick={() => handleOpenAddBook(shelf.id)} className="px-3 py-1 text-white text-sm font-semibold rounded-md" style={{backgroundColor: PALETTE.accent}}>+ Add Book</button></div></div><div className="relative pt-4 pb-2" style={{ backgroundColor: '#424242', backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-wood.png')`, boxShadow: '0 2px 8px rgba(0,0,0,0.5), inset 0 6px 10px -5px rgba(0,0,0,0.7)'}}><div className="flex items-end gap-2 overflow-x-auto px-4 min-h-[250px]">{(shelf.books || []).map(book => <BookSpine key={book.id} book={book} onClick={() => setViewedBook({...book, shelfId: shelf.id})} />)}</div><div className="h-4" style={{backgroundColor: PALETTE.shelf, boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.4)'}}></div></div></div>))}</div>
                 {isAddBookModalOpen && ( <AddBookModal shelfId={selectedShelfIdForBook} onClose={() => setIsAddBookModalOpen(false)} db={db} userId={user.uid} /> )}
                 {viewedBook && ( <BookDetailModal book={viewedBook} onClose={() => setViewedBook(null)} onRemove={handleRemoveBook} /> )}
                 <DeleteConfirmationModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} shelfName={shelfToDelete?.name} />
@@ -245,8 +228,7 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => 
     );
 };
 
-
-// NEW: Wrapper component for the wardrobe animation
+// UPDATED LibraryWrapper with more robust styling for the doors
 const LibraryWrapper = ({ user, shelves, onAddShelf, onDeleteShelf, db, auth }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [contentVisible, setContentVisible] = useState(false);
@@ -254,40 +236,38 @@ const LibraryWrapper = ({ user, shelves, onAddShelf, onDeleteShelf, db, auth }) 
     const handleToggleCabinet = () => {
         if (!isOpen) {
             setIsOpen(true);
-            setTimeout(() => setContentVisible(true), 1000); // Fade in content after doors start opening
+            setTimeout(() => setContentVisible(true), 1000);
         }
+    };
+
+    const doorStyle = {
+        backfaceVisibility: 'hidden',
+        backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-wood.png'), linear-gradient(to right, #3C2F2F, #4E342E)`,
+        transition: 'transform 2.5s cubic-bezier(0.77, 0, 0.175, 1)'
     };
 
     return (
         <div className="w-full h-screen bg-black overflow-hidden" style={{ perspective: '1500px' }}>
             <div className={`relative w-full h-full transition-transform duration-1000 ease-in-out ${isOpen ? 'scale-150' : ''}`} style={{ transformStyle: 'preserve-3d' }}>
-                {/* Bookshelf content - positioned behind doors */}
                 <div className={`absolute inset-0 transition-opacity duration-500 ${contentVisible ? 'opacity-100' : 'opacity-0'}`}>
                     <LibraryView shelves={shelves} user={user} onAddShelf={onAddShelf} onDeleteShelf={onDeleteShelf} db={db} auth={auth} />
                 </div>
-                
-                {/* Enter Button Overlay */}
                 <div onClick={handleToggleCabinet} className={`absolute inset-0 flex items-center justify-center cursor-pointer z-20 transition-opacity duration-1000 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                     <div className="text-center">
                         <h1 className="text-4xl md:text-6xl text-white font-bold tracking-widest" style={{ fontFamily: titleFont, textShadow: '0 0 15px rgba(255,223,186,0.5)' }}>The Library</h1>
                         <p className="text-white/70 mt-4 tracking-[0.2em] animate-pulse">Click to Enter</p>
                     </div>
                 </div>
-
-                {/* Left Door */}
-                <div className={`absolute top-0 left-0 w-1/2 h-full p-8 flex flex-col justify-between border-r-2 border-black origin-left transition-transform duration-[2.5s] ease-[cubic-bezier(0.77,0,0.175,1)] shadow-2xl ${isOpen ? '-rotate-y-130' : ''}`} style={{ backfaceVisibility: 'hidden', backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-wood.png'), linear-gradient(to right, #3C2F2F, #4E342E)` }}>
+                <div className="absolute top-0 left-0 w-1/2 h-full p-8 flex flex-col justify-between border-r-2 border-black origin-left shadow-2xl" style={{ ...doorStyle, transform: isOpen ? 'rotateY(-130deg)' : 'rotateY(0deg)' }}>
                     <div className="h-1/4 w-full border-4 border-transparent p-2" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}></div><div className="h-1/3 w-full border-4 border-transparent p-2 relative" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}><div className="absolute top-1/2 -right-6 -translate-y-1/2 w-4 h-16 rounded-full" style={{background: 'linear-gradient(145deg, #b08d57, #8a6e45)'}}></div></div><div className="h-1/4 w-full border-4 border-transparent p-2" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}></div>
                 </div>
-
-                {/* Right Door */}
-                <div className={`absolute top-0 right-0 w-1/2 h-full p-8 flex flex-col justify-between border-l-2 border-black origin-right transition-transform duration-[2.5s] ease-[cubic-bezier(0.77,0,0.175,1)] shadow-2xl ${isOpen ? 'rotate-y-130' : ''}`} style={{ backfaceVisibility: 'hidden', backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-wood.png'), linear-gradient(to left, #3C2F2F, #4E342E)` }}>
+                <div className="absolute top-0 right-0 w-1/2 h-full p-8 flex flex-col justify-between border-l-2 border-black origin-right shadow-2xl" style={{ ...doorStyle, transform: isOpen ? 'rotateY(130deg)' : 'rotateY(0deg)' }}>
                     <div className="h-1/4 w-full border-4 border-transparent p-2" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}></div><div className="h-1/3 w-full border-4 border-transparent p-2 relative" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}><div className="absolute top-1/2 -left-6 -translate-y-1/2 w-4 h-16 rounded-full" style={{background: 'linear-gradient(145deg, #b08d57, #8a6e45)'}}></div></div><div className="h-1/4 w-full border-4 border-transparent p-2" style={{borderImage: 'linear-gradient(145deg, #b08d57, #8a6e45) 1'}}></div>
                 </div>
             </div>
         </div>
     );
 };
-
 
 export default function App() {
     const [auth, setAuth] = useState(null);
@@ -301,7 +281,6 @@ export default function App() {
         fontLink.href = "https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=DM+Serif+Display&family=Lato:wght@400;700&family=Playfair+Display:wght@700&display=swap";
         fontLink.rel = 'stylesheet';
         document.head.appendChild(fontLink);
-        
         try {
             const app = initializeApp(firebaseConfig);
             const authInstance = getAuth(app);
@@ -339,6 +318,5 @@ export default function App() {
     if (isLoading) { return <div className="min-h-screen flex items-center justify-center bg-black text-white">Loading Library...</div>; }
     if (!user) { return <AuthComponent auth={auth} />; }
     
-    // The main App now returns the LibraryWrapper instead of LibraryView directly
     return <LibraryWrapper shelves={shelves} user={user} onAddShelf={handleAddShelf} onDeleteShelf={handleDeleteShelf} db={db} auth={auth} />;
 }
