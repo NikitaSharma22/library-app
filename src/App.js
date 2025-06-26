@@ -222,6 +222,7 @@ const BookDetailModal = ({ book, onClose, onRemove }) => {
     );
 };
 
+// UPDATED LibraryView with new header layout
 const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -259,20 +260,27 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth }) => 
     return (
         <div className="min-h-screen w-full p-4 sm:p-6 lg:p-8" style={{ background: PALETTE.background, fontFamily: bodyFont }}>
             <div className="max-w-7xl mx-auto">
-                <header className="flex justify-between items-center mb-6 md:mb-10">
-                    <div className="w-1/3 relative">
-                        <input type="text" placeholder="Search books..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full max-w-sm p-2 pl-8 border rounded-full bg-white/80" />
-                        <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        {searchQuery && (<div className="absolute top-full mt-2 w-full max-w-sm bg-white rounded-lg shadow-lg overflow-hidden z-10">{searchResults.length > 0 ? (<ul>{searchResults.slice(0, 10).map(book => (<li key={book.id} onClick={() => handleOpenBook(book)} className="p-3 hover:bg-gray-100 cursor-pointer border-b"><p className="font-bold">{book.title}</p><p className="text-sm text-gray-600">by {book.author} on "{book.shelfName}"</p></li>))}</ul>) : (<p className="p-3 text-sm text-gray-500">No results found.</p>)}</div>)}
+                {/* NEW HEADER STRUCTURE */}
+                <div className="mb-8">
+                    <div className="w-full flex justify-center mb-4">
+                        <div className="w-full max-w-lg relative">
+                            <input type="text" placeholder="Search books by title, author, description, or tag..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-10 border rounded-full bg-white/80" />
+                            <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            {searchQuery && (<div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-10">{searchResults.length > 0 ? (<ul>{searchResults.slice(0, 10).map(book => (<li key={book.id} onClick={() => handleOpenBook(book)} className="p-3 hover:bg-gray-100 cursor-pointer border-b"><p className="font-bold">{book.title}</p><p className="text-sm text-gray-600">by {book.author} on "{book.shelfName}"</p></li>))}</ul>) : (<p className="p-3 text-sm text-gray-500">No results found.</p>)}</div>)}
+                        </div>
                     </div>
-                    <h1 className="text-xl sm:text-4xl md:text-5xl font-extrabold text-center" style={{ color: PALETTE.text, fontFamily: titleFont }}>{user.displayName ? `${user.displayName}'s Library` : "My Library"}</h1>
-                    <div className="w-1/3 flex justify-end">
-                        <button onClick={() => signOut(auth)} className="flex items-center justify-center bg-red-500 text-white hover:bg-red-700 transition-colors p-2 md:px-4 md:py-2 rounded-full md:rounded-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
-                            <span className="hidden md:inline ml-2">Logout</span>
-                        </button>
-                    </div>
-                </header>
+                    <header className="flex justify-between items-center">
+                        <div className="w-1/3"></div>
+                        <h1 className="w-1/3 text-xl sm:text-4xl md:text-5xl font-extrabold text-center" style={{ color: PALETTE.text, fontFamily: titleFont }}>{user.displayName ? `${user.displayName}'s Library` : "My Library"}</h1>
+                        <div className="w-1/3 flex justify-end">
+                            <button onClick={() => signOut(auth)} className="flex items-center justify-center bg-red-500 text-white hover:bg-red-700 transition-colors p-2 md:px-4 md:py-2 rounded-full md:rounded-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
+                                <span className="hidden md:inline ml-2">Logout</span>
+                            </button>
+                        </div>
+                    </header>
+                </div>
+
                 <div className="max-w-xl mx-auto mb-12 p-4 bg-white/70 rounded-lg shadow-md">
                     <form onSubmit={handleAddShelf} className="flex gap-2"><input type="text" value={newShelfName} onChange={e => setNewShelfName(e.target.value)} placeholder="Name a new collection..." className="flex-grow p-3 border rounded-md" /><button type="submit" className="px-6 py-3 text-white font-semibold rounded-md flex items-center justify-center" style={{backgroundColor: PALETTE.text}}>Create</button></form>
                 </div>
