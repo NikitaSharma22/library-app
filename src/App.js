@@ -68,6 +68,21 @@ const AuthComponent = ({ auth }) => {
 
 // --- Library Components ---
 
+const Footer = () => {
+    return (
+        <footer className="text-center py-8 px-4 text-white/50 text-sm">
+            <p className="flex items-center justify-center gap-2">
+                Made with
+                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor" className="transition-transform duration-300 hover:scale-125">
+                    <path d="M0 0h24v24H0V0z" fill="none"/>
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                by Nikita
+            </p>
+        </footer>
+    );
+};
+
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, shelfName }) => {
     if (!isOpen) return null;
     return ( <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}> <div className="bg-white rounded-lg shadow-2xl p-6 md:p-8 w-full max-w-md text-center" onClick={e => e.stopPropagation()}> <h2 className="text-2xl font-bold mb-4" style={{ color: PALETTE.text, fontFamily: titleFont }}>Delete Shelf?</h2> <p className="mb-6" style={{ fontFamily: bodyFont, color: '#424242' }}>Are you sure you want to permanently delete the shelf named <strong className="font-bold">"{shelfName}"</strong> and all of its books?</p> <p className="text-sm text-gray-500 mb-6">This action cannot be undone.</p> <div className="flex justify-center gap-4"> <button onClick={onClose} className="px-6 py-2 rounded-md bg-gray-200 hover:bg-gray-300 font-semibold" style={{color: PALETTE.text}}>Cancel</button> <button onClick={onConfirm} className="px-6 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700">Delete</button> </div> </div> </div> );
@@ -136,7 +151,6 @@ const AddBookModal = ({ shelfId, onClose, db, userId, bookToEdit, onUpdateBook }
         let bookData = { title, author, pages: parseInt(pages, 10), description, tags, rating: parseFloat(rating) || 0, status, spineColor, coverColor };
         
         try {
-            // Handle image upload ONLY if a new one is provided
             if (coverType === 'upload' && coverFile) {
                 const imageUrl = await uploadToCloudinary(coverFile);
                 bookData.coverImageUrl = imageUrl;
@@ -145,7 +159,6 @@ const AddBookModal = ({ shelfId, onClose, db, userId, bookToEdit, onUpdateBook }
                 const imageUrl = await uploadToCloudinary(aiFile);
                 bookData.coverImageUrl = imageUrl;
             } else if (isEditMode) {
-                // Preserve the existing image URL if not uploading a new one
                 bookData.coverImageUrl = bookToEdit.coverImageUrl;
             }
 
@@ -206,7 +219,6 @@ const BookSpine = ({ book, onClick }) => {
 };
 
 const BookDetailModal = ({ book, onClose, onRemove, onEdit }) => {
-    // --- UPDATED: The entire card content is now scrollable ---
     const [isFlipped, setIsFlipped] = useState(false);
     useEffect(() => { const timer = setTimeout(() => setIsFlipped(true), 100); return () => clearTimeout(timer); }, []);
     const handleBackgroundClick = (e) => { if (e.target === e.currentTarget) onClose(); };
@@ -215,13 +227,10 @@ const BookDetailModal = ({ book, onClose, onRemove, onEdit }) => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-40" onClick={handleBackgroundClick} style={{ perspective: '2000px', fontFamily: bodyFont }}>
             <div className={`relative w-full max-w-4xl h-[90vh] max-h-[600px] transition-transform duration-1000`} style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : '' }}>
 
-                {/* Back of the card (details). NOTE: 'overflow-hidden' was removed from this container to allow child scrolling. */}
                 <div className="absolute w-full h-full bg-white shadow-2xl rounded-lg flex flex-col md:flex-row" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                     
-                    {/* Cover Image */}
                     <div className="w-full md:w-1/3 h-1/3 md:h-full flex-shrink-0 bg-cover bg-center" style={{ backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})` }}></div>
                     
-                    {/* Scrollable Content Panel (All content scrolls together) */}
                     <div className="p-6 md:p-8 flex flex-col flex-grow overflow-y-auto min-h-0">
                         <h2 className="text-3xl font-bold" style={{ color: PALETTE.text, fontFamily: titleFont }}>{book.title}</h2>
                         <h3 className="text-xl text-gray-500 mb-2" style={{ fontFamily: titleFont }}>by {book.author || 'Unknown'}</h3>
@@ -244,7 +253,6 @@ const BookDetailModal = ({ book, onClose, onRemove, onEdit }) => {
                             <p className="whitespace-pre-wrap">{book.description || "No description."}</p>
                         </div>
 
-                        {/* Buttons are pushed to the bottom by mt-auto */}
                         <div className="mt-auto pt-6 flex gap-4">
                             <button onClick={onEdit} className="self-start px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">Edit</button>
                             <button onClick={onRemove} className="self-start px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">Remove</button>
@@ -252,31 +260,12 @@ const BookDetailModal = ({ book, onClose, onRemove, onEdit }) => {
                     </div>
                 </div>
 
-                {/* Front of the card */}
                 <div className="absolute w-full h-full bg-gray-300 shadow-2xl rounded-lg bg-cover bg-center" style={{ backfaceVisibility: 'hidden', backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})` }}></div>
             </div>
         </div>
     );
 };
 
-const Footer = () => {
-    const GoogleIcon = () => (
-        <svg viewBox="0 0 24 24" className="w-4 h-4 inline-block mx-1" aria-hidden="true">
-            <path fill="#4285F4" d="M22.56,12.25C22.56,11.45 22.49,10.66 22.35,9.88H12V14.5H18.02C17.72,16.14 16.76,17.56 15.1,18.52V21.1H19.22C21.43,19.03 22.56,15.93 22.56,12.25Z"/>
-            <path fill="#34A853" d="M12,23C15.24,23 17.96,21.92 19.92,20.19L15.82,17.41C14.76,18.1 13.5,18.52 12,18.52C9.09,18.52 6.6,16.63 5.74,14.05H1.54V16.83C3.47,20.57 7.4,23 12,23Z"/>
-            <path fill="#FBBC05" d="M5.74,14.05C5.5,13.37 5.37,12.68 5.37,12C5.37,11.32 5.5,10.63 5.74,9.95V7.17H1.54C0.58,9.1 0,10.99 0,12C0,13.01 0.58,14.9 1.54,16.83L5.74,14.05Z"/>
-            <path fill="#EA4335" d="M12,5.48C13.84,5.48 15.35,6.08 16.43,7.1L19.92,3.62C17.96,1.86 15.24,0.91 12,0.91C7.4,0.91 3.47,3.43 1.54,7.17L5.74,9.95C6.6,7.37 9.09,5.48 12,5.48Z"/>
-        </svg>
-    );
-
-    return (
-        <footer className="w-full text-center py-8 mt-12">
-            <p className="text-sm text-white/50">
-                Made with <GoogleIcon /> by Nikita
-            </p>
-        </footer>
-    );
-};
 
 const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth, onUpdateBook }) => {
     const [searchQuery, setSearchQuery] = useState('');
