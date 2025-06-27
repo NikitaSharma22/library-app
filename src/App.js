@@ -42,6 +42,7 @@ const Spinner = () => <div className="animate-spin rounded-full h-6 w-6 border-b
 
 // --- Auth Component ---
 const AuthComponent = ({ auth }) => {
+    // This component remains the same
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [displayName, setDisplayName] = useState('');
@@ -69,6 +70,7 @@ const AuthComponent = ({ auth }) => {
 // --- Library Components ---
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, shelfName }) => {
+    // This component remains the same
     if (!isOpen) return null;
     return ( <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}> <div className="bg-white rounded-lg shadow-2xl p-6 md:p-8 w-full max-w-md text-center" onClick={e => e.stopPropagation()}> <h2 className="text-2xl font-bold mb-4" style={{ color: PALETTE.text, fontFamily: titleFont }}>Delete Shelf?</h2> <p className="mb-6" style={{ fontFamily: bodyFont, color: '#424242' }}>Are you sure you want to permanently delete the shelf named <strong className="font-bold">"{shelfName}"</strong> and all of its books?</p> <p className="text-sm text-gray-500 mb-6">This action cannot be undone.</p> <div className="flex justify-center gap-4"> <button onClick={onClose} className="px-6 py-2 rounded-md bg-gray-200 hover:bg-gray-300 font-semibold" style={{color: PALETTE.text}}>Cancel</button> <button onClick={onConfirm} className="px-6 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700">Delete</button> </div> </div> </div> );
 };
@@ -136,7 +138,6 @@ const AddBookModal = ({ shelfId, onClose, db, userId, bookToEdit, onUpdateBook }
         let bookData = { title, author, pages: parseInt(pages, 10), description, tags, rating: parseFloat(rating) || 0, status, spineColor, coverColor };
         
         try {
-            // Handle image upload ONLY if a new one is provided
             if (coverType === 'upload' && coverFile) {
                 const imageUrl = await uploadToCloudinary(coverFile);
                 bookData.coverImageUrl = imageUrl;
@@ -145,7 +146,6 @@ const AddBookModal = ({ shelfId, onClose, db, userId, bookToEdit, onUpdateBook }
                 const imageUrl = await uploadToCloudinary(aiFile);
                 bookData.coverImageUrl = imageUrl;
             } else if (isEditMode) {
-                // Preserve the existing image URL if not uploading a new one
                 bookData.coverImageUrl = bookToEdit.coverImageUrl;
             }
 
@@ -273,8 +273,8 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth, onUpd
                 <div className="max-w-xl mx-auto mb-12 p-4 bg-black/20 rounded-lg shadow-md"><form onSubmit={handleAddShelf} className="flex flex-col sm:flex-row gap-2"><input type="text" value={newShelfName} onChange={e => setNewShelfName(e.target.value)} placeholder="Name a new shelf..." className="flex-grow p-3 border border-white/20 rounded-md bg-white/10 text-white placeholder-white/50" /><button type="submit" className="px-6 py-3 text-white font-semibold rounded-md" style={{backgroundColor: PALETTE.text}}>Create</button></form></div>
                 <div className="space-y-16">{filteredShelves.map(shelf => (<div key={shelf.id}><div className="flex justify-between items-center mb-8 relative z-10"><div className="relative -ml-4 shadow-lg"><div className="absolute -inset-1 bg-gradient-to-br from-amber-200 to-amber-400 rounded-sm transform -skew-y-3"></div><h2 className="relative px-4 py-1 bg-[#fdfaf5]" style={{backgroundImage: `url('https://www.transparenttextures.com/patterns/old-paper.png')`}}><span className="text-2xl font-bold" style={{ color: PALETTE.text, fontFamily: titleFont }}>{shelf.name}</span></h2></div><div className="flex items-center gap-4"><button onClick={() => handleOpenDeleteModal(shelf)} className="w-8 h-8 flex items-center justify-center bg-red-600 rounded-full text-white hover:bg-red-700" title="Delete shelf"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" /></svg></button><button onClick={() => handleOpenAddBook(shelf.id)} className="px-3 py-1 text-white text-sm font-semibold rounded-md" style={{backgroundColor: PALETTE.accent}}>+ Add Book</button></div></div>
                     <div className="relative" style={{filter: 'drop-shadow(0 5px 5px rgba(0,0,0,0.5))'}}>
-                         <div className="min-h-[250px] pb-6">{shelf.books?.length > 0 && <div className="flex items-end gap-2 overflow-x-auto px-4">{shelf.books.map(book => <BookSpine key={book.id} book={book} onClick={() => setViewedBook({...book, shelfId: shelf.id})} />)}</div>}</div>
-                       <div className="h-6 rounded-b-sm" style={{backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url('https://www.transparenttextures.com/patterns/dark-wood.png')`, boxShadow: '0 -2px 5px rgba(0,0,0,0.01) inset'}}></div>
+                         <div className="min-h-[250px] pb-6 flex items-end gap-2 overflow-x-auto px-4">{shelf.books?.map(book => <BookSpine key={book.id} book={book} onClick={() => setViewedBook({...book, shelfId: shelf.id})} />)}</div>
+                         <div className="h-6 rounded-b-sm" style={{backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url('https://www.transparenttextures.com/patterns/dark-wood.png')`, boxShadow: '0 -2px 5px rgba(0,0,0,0.4) inset'}}></div>
                     </div>
                 </div>))}</div>
             </div>
@@ -309,7 +309,7 @@ const FairyLights = () => {
 };
 
 const LibraryWrapper = ({ user, shelves, onAddShelf, onDeleteShelf, db, auth, onUpdateBook }) => {
-    // This component remains the same
+    // UPDATED to pass onUpdateBook down
     const [isOpen, setIsOpen] = useState(false);
     const [contentVisible, setContentVisible] = useState(false);
     const handleToggleCabinet = () => { if (!isOpen) { setIsOpen(true); setTimeout(() => setContentVisible(true), 500); } };
