@@ -259,6 +259,24 @@ const BookDetailModal = ({ book, onClose, onRemove, onEdit }) => {
     );
 };
 
+const Footer = () => {
+    const GoogleIcon = () => (
+        <svg viewBox="0 0 24 24" className="w-4 h-4 inline-block mx-1" aria-hidden="true">
+            <path fill="#4285F4" d="M22.56,12.25C22.56,11.45 22.49,10.66 22.35,9.88H12V14.5H18.02C17.72,16.14 16.76,17.56 15.1,18.52V21.1H19.22C21.43,19.03 22.56,15.93 22.56,12.25Z"/>
+            <path fill="#34A853" d="M12,23C15.24,23 17.96,21.92 19.92,20.19L15.82,17.41C14.76,18.1 13.5,18.52 12,18.52C9.09,18.52 6.6,16.63 5.74,14.05H1.54V16.83C3.47,20.57 7.4,23 12,23Z"/>
+            <path fill="#FBBC05" d="M5.74,14.05C5.5,13.37 5.37,12.68 5.37,12C5.37,11.32 5.5,10.63 5.74,9.95V7.17H1.54C0.58,9.1 0,10.99 0,12C0,13.01 0.58,14.9 1.54,16.83L5.74,14.05Z"/>
+            <path fill="#EA4335" d="M12,5.48C13.84,5.48 15.35,6.08 16.43,7.1L19.92,3.62C17.96,1.86 15.24,0.91 12,0.91C7.4,0.91 3.47,3.43 1.54,7.17L5.74,9.95C6.6,7.37 9.09,5.48 12,5.48Z"/>
+        </svg>
+    );
+
+    return (
+        <footer className="w-full text-center py-8 mt-12">
+            <p className="text-sm text-white/50">
+                Made with <GoogleIcon /> by Nikita
+            </p>
+        </footer>
+    );
+};
 
 const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth, onUpdateBook }) => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -322,6 +340,7 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth, onUpd
                         <div className="h-6 rounded-b-sm" style={{backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url('https://www.transparenttextures.com/patterns/dark-wood.png')`, boxShadow: '0 -2px 5px rgba(0,0,0,0.01) inset'}}></div>
                     </div>
                 </div>))}</div>
+                <Footer />
             </div>
             {isAddModalOpen && ( <AddBookModal shelfId={shelfForNewBook} onClose={() => setIsAddModalOpen(false)} db={db} userId={user.uid} /> )}
             {isEditModalOpen && bookToEdit && ( <AddBookModal bookToEdit={bookToEdit} onClose={() => setIsEditModalOpen(false)} db={db} userId={user.uid} onUpdateBook={onUpdateBook}/> )}
