@@ -172,6 +172,7 @@ const getColorForTag = (tag) => {
 };
 
 const StarRating = ({ rating }) => {
+    // This component remains the same
     const fullStars = Math.floor(rating);
     const partialStarWidth = (rating % 1) * 100;
     return (
@@ -206,16 +207,40 @@ const BookSpine = ({ book, onClick }) => {
     return ( <div className="group relative flex-shrink-0 h-[240px] cursor-pointer transform transition-transform duration-200 hover:-translate-y-2 mr-2" style={{ width: `${thickness}px`, marginTop: `${randomHeightOffset}px` }} onClick={onClick}> <div className="absolute top-0 left-[3px] w-full h-full bg-[#fdfaf5]" style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/lined-paper.png')`, boxShadow: 'inset 3px 0 5px rgba(0,0,0,0.25)' }}></div> <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-1" style={{ backgroundColor: spineColor, backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.3), transparent 10%, transparent 90%, rgba(0,0,0,0.3))`, boxShadow: '3px 0 6px rgba(0,0,0,0.4)' }}> <div className="h-2 w-full bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 opacity-70"></div> <span className="text-white font-bold text-center overflow-hidden flex-grow flex items-center justify-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)', fontFamily: spineFont, fontSize: fontSize, color: '#FFD700', textShadow: '1px 1px 1px rgba(0,0,0,0.9)', letterSpacing: '1.5px', padding: '5px 0' }}>{book.title}</span> <div className="h-2 w-full bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 opacity-70"></div> </div> </div> );
 };
 
+// UPDATED BookDetailModal for responsive scrolling
 const BookDetailModal = ({ book, onClose, onRemove, onEdit }) => {
-    // UPDATED with onEdit handler
     const [isFlipped, setIsFlipped] = useState(false);
     useEffect(() => { const timer = setTimeout(() => setIsFlipped(true), 100); return () => clearTimeout(timer); }, []);
     const handleBackgroundClick = (e) => { if (e.target === e.currentTarget) onClose(); };
-    return ( <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-40" onClick={handleBackgroundClick} style={{ perspective: '2000px', fontFamily: bodyFont }}> <div className={`relative w-full max-w-4xl h-[90vh] max-h-[600px] transition-transform duration-1000`} style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : '' }}> <div className="absolute w-full h-full bg-white shadow-2xl rounded-lg flex flex-col md:flex-row overflow-hidden" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}> <div className="w-full md:w-1/3 h-1/3 md:h-full flex-shrink-0" style={{ backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div> <div className="p-6 md:p-8 flex flex-col flex-grow overflow-y-auto min-h-0"> <h2 className="text-3xl font-bold" style={{color: PALETTE.text, fontFamily: titleFont}}>{book.title}</h2> <h3 className="text-xl text-gray-500 mb-2" style={{fontFamily: titleFont}}>by {book.author || 'Unknown'}</h3> <div className="flex items-center gap-4 mb-4"> <StarRating rating={book.rating || 0} /> <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${book.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{book.status || 'Incomplete'}</span> </div> <p className="text-gray-500 mb-6 flex-shrink-0">Pages: {book.pages}</p> {book.tags && book.tags.length > 0 && (<div className="mb-6 flex flex-wrap gap-2">{book.tags.map(tag => (<span key={tag} className="text-white text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: getColorForTag(tag) }}>{tag}</span>))}</div>)} <div className="text-gray-700 space-y-4 flex-grow"><h3 className="font-bold text-lg" style={{color: PALETTE.text}}>Description</h3><p className="whitespace-pre-wrap">{book.description || "No description."}</p></div> <div className="mt-6 flex gap-4"><button onClick={onEdit} className="self-start px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">Edit</button><button onClick={onRemove} className="self-start px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">Remove</button></div> </div> </div> <div className="absolute w-full h-full bg-gray-300 shadow-2xl rounded-lg" style={{ backfaceVisibility: 'hidden', backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div> </div> </div> );
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-40" onClick={handleBackgroundClick} style={{ perspective: '2000px', fontFamily: bodyFont }}>
+            <div className={`relative w-full max-w-4xl h-[90vh] max-h-[600px] transition-transform duration-1000`} style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : '' }}>
+                {/* Back side of book (details) */}
+                <div className="absolute w-full h-full bg-white shadow-2xl rounded-lg flex flex-col md:flex-row overflow-hidden" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                    <div className="w-full md:w-1/3 h-1/3 md:h-full flex-shrink-0" style={{ backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                    {/* This div is now the main scrolling container */}
+                    <div className="p-6 md:p-8 flex flex-col flex-grow overflow-y-auto min-h-0">
+                        <h2 className="text-3xl font-bold" style={{color: PALETTE.text, fontFamily: titleFont}}>{book.title}</h2>
+                        <h3 className="text-xl text-gray-500 mb-2" style={{fontFamily: titleFont}}>by {book.author || 'Unknown'}</h3>
+                        <div className="flex items-center gap-4 mb-4">
+                            <StarRating rating={book.rating || 0} />
+                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${book.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{book.status || 'Incomplete'}</span>
+                        </div>
+                        <p className="text-gray-500 mb-6 flex-shrink-0">Pages: {book.pages}</p>
+                        {book.tags && book.tags.length > 0 && (<div className="mb-6 flex flex-wrap gap-2">{book.tags.map(tag => (<span key={tag} className="text-white text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: getColorForTag(tag) }}>{tag}</span>))}</div>)}
+                        <div className="text-gray-700 space-y-4 flex-grow"><h3 className="font-bold text-lg" style={{color: PALETTE.text}}>Description</h3><p className="whitespace-pre-wrap">{book.description || "No description."}</p></div>
+                        <div className="mt-6 flex gap-4 flex-shrink-0"><button onClick={onEdit} className="self-start px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">Edit</button><button onClick={onRemove} className="self-start px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">Remove</button></div>
+                    </div>
+                </div>
+                {/* Front side of book (cover) */}
+                <div className="absolute w-full h-full bg-gray-300 shadow-2xl rounded-lg" style={{ backfaceVisibility: 'hidden', backgroundColor: book.coverColor, backgroundImage: `url(${book.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+            </div>
+        </div>
+    );
 };
 
 const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth, onUpdateBook }) => {
-    // UPDATED with state and handlers for EditBookModal
+    // This component remains the same
     const [searchQuery, setSearchQuery] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [shelfToDelete, setShelfToDelete] = useState(null);
@@ -286,6 +311,7 @@ const LibraryView = ({ shelves, user, onAddShelf, onDeleteShelf, db, auth, onUpd
     );
 };
 
+// ADDED FairyLights component definition
 const FairyLights = () => {
     return (
         <div className="absolute top-0 left-0 w-full h-10 overflow-hidden z-20 pointer-events-none">
